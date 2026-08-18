@@ -1,6 +1,6 @@
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
-mode con: cols=110 lines=48 >nul 2>&1
+mode con: cols=96 lines=48 >nul 2>&1
 title RAYMOND'S ENDPOINT TOOLKIT - Diagnostics - Security - Repair - Optimization
 color 0A
 
@@ -8,9 +8,10 @@ color 0A
 :: RAYMOND'S ENDPOINT TOOLKIT
 :: Windows Diagnostics, Security, Repair and Optimization Utility
 ::
-:: Raymond Endpoint Toolkit
-:: Version: 0.9.0-beta
-:: Author: Raymond Hernandez
+:: Raymond  Endpoint Toolkit
+:: Version: 0.9.2-beta
+:: Author:  Raymond Hernandez
+:: Date:    August 18, 2026
 ::
 :: Purpose:
 ::   Portable Windows endpoint toolkit for technicians.
@@ -73,20 +74,20 @@ echo      /_\ /  \/ / /\ / /_)//  // / /\/  \/ /  / /\/   / /\//  ///  // /   / 
 echo     //__/ /\  / /_// ___/ \_//\/ /_/ /\  /  / /     / / / \_// \_// /___/ __ \/\/ /_   / /
 echo     \__/\_\ \/___,'\/   \___/\____/\_\ \/   \/      \/  \___/\___/\____/\/  \/\____/   \/
 echo                        Raymond Hernandez (raymondhernandez@outlook.com)
-echo                         Computer: %COMPUTERNAME%     User: %USERNAME%
+echo                        Computer: %COMPUTERNAME%     User: %USERNAME%
 echo ================================================================================================
 echo NETWORK / WI-FI             WINDOWS REPAIR / HARDWARE         WINDOWS / ADMIN TOOLS
 echo ================================================================================================
-echo [1]  Complete Network       [12] Run System File Checker      [18] Open Device Manager
+echo [1]  Full Network Report    [12] Run System File Checker      [18] Open Device Manager
 echo [2]  Release / Renew IP     [13] DISM CheckHealth             [19] Open Windows Update
 echo [3]  Flush DNS Cache        [14] DISM ScanHealth              [26] Enable God Mode
 echo [4]  Reset TCP/IP           [15] DISM RestoreHealth           [27] Event Viewer + Reliability
 echo [5]  Reset Winsock          [16] Scan for Hardware Changes    [28] Open Services
 echo [6]  Network Reset          [17] Generate Driver Report       [29] Open Computer Management
-echo [7]  Test Internet                                            [30] Open Task Manager
-echo [8]  Show Wi-Fi Profiles                                      [31] Open Programs and Features
-echo [9]  Show Wi-Fi Password
-echo [10] Current Network
+echo [7]  Test Internet          [58] Windows Update Repair        [30] Open Task Manager
+echo [8]  Show Wi-Fi Profiles    [60] User Profile Health          [31] Open Programs and Features
+echo [9]  Show Wi-Fi Password    [61] Windows Shell Repair
+echo [10] Current Network        [62] Registry Diagnostics
 echo [11] Wi-Fi Report
 echo.
 echo ================================================================================================
@@ -96,7 +97,7 @@ echo [20] System Information     [35] USB Device Security          [45] User / L
 echo [21] Disk / Drive Health    [36] Browser History              [46] Authentication / Logon
 echo [22] Running Process        [37] Network Artifact             [47] Installed Software Security
 echo [23] Show System Uptime     [38] Port and Service Exposure    [48] Remote Access Software
-echo [24] Generate Battery       [39] MS Defender Maintenance      [49] Network Configuration Security
+echo [24] Generate Battery       [39] MS Defender Maintenance      [49] Network Conf Security
 echo [25] BitLocker Status       [40] MS Defender Offline Scan     [50] File Integrity
 echo [32] Full Diagnostic        [41] Security Configuration       [51] Windows Update Health
 echo [33] Open Toolkit Logs      [42] Persistence / Startup        [52] Crash / Stability
@@ -104,10 +105,10 @@ echo [34] Deep Audio Diagnostic  [43] Scheduled Task Audit         [53] Incident
 echo                             [44] Windows Service Audit
 echo.
 echo ================================================================================================
-echo PERFORMANCE / OPTIMIZATION  REPAIR / RECOVERY                 PORTABLE / MAINTENANCE
+echo PERFORMANCE / OPTIMIZATION  PORTABLE / MAINTENANCE
 echo ================================================================================================
-echo [54] Performance Analyzer   [58] Windows Update Repair        [59] Driver Backup
-echo [55] Optimization Center    [60] User Profile Health          [61] Windows Shell Repair
+echo [54] Performance Analyzer   [59] Driver Backup
+echo [55] Optimization Center    [63] App Updates - WinGet
 echo [56] Power / Sleep
 echo [57] Startup Performance
 echo ================================================================================================
@@ -177,6 +178,8 @@ if "%selection%"=="58" goto UPDATEREPAIR
 if "%selection%"=="59" goto DRIVERBACKUP
 if "%selection%"=="60" goto PROFILEHEALTH
 if "%selection%"=="61" goto SHELLREPAIR
+if "%selection%"=="62" goto REGISTRYCENTER
+if "%selection%"=="63" goto WINGETCENTER
 
 echo.
 echo Invalid selection.
@@ -185,38 +188,11 @@ goto MENU
 
 
 :: ============================================================
-:: NETWORK - COMPLETE CONFIGURATION
+:: NETWORK - FULL HTML REPORT
 :: ============================================================
 
 :NETWORKINFO
-cls
-echo ============================================================
-echo COMPLETE NETWORK CONFIGURATION
-echo ============================================================
-echo.
-
-call :WriteLog "Network configuration requested"
-
-ipconfig /all
-
-echo.
-echo ------------------------------------------------------------
-echo Routing Table
-echo ------------------------------------------------------------
-echo.
-
-route print
-
-echo.
-echo ------------------------------------------------------------
-echo DNS Cache
-echo ------------------------------------------------------------
-echo.
-
-ipconfig /displaydns
-
-echo.
-pause
+call :GenericMaintenanceReport "Network" "NetworkReport" "FULL NETWORK REPORT"
 goto MENU
 
 
@@ -6079,6 +6055,573 @@ goto SHELLREPAIR_MENU
 
 
 :: ============================================================
+:: APPLICATION UPDATES - WINGET
+:: ============================================================
+
+:WINGETCENTER
+:WINGET_MENU
+@echo off
+cls
+color 0A
+
+echo ============================================================
+echo APPLICATION UPDATES - WINGET
+echo ============================================================
+echo.
+
+where winget.exe >nul 2>&1
+if errorlevel 1 (
+    echo Windows Package Manager ^(WinGet^) was not found.
+    echo.
+    echo WinGet is normally provided by Microsoft App Installer.
+    echo This toolkit will not install or modify WinGet automatically.
+    echo.
+    pause
+    goto MENU
+)
+
+echo [1] Show Available App Updates
+echo [2] Update Selected App by Package ID
+echo [3] Update All Available Apps
+echo [4] Refresh WinGet Sources
+echo [5] Generate App Update HTML Report
+echo [0] Back to Main Menu
+echo.
+
+set "wingchoice="
+set /p "wingchoice=Select an option: "
+
+if "%wingchoice%"=="0" goto MENU
+if "%wingchoice%"=="1" goto WINGET_CHECK
+if "%wingchoice%"=="2" goto WINGET_SELECTED
+if "%wingchoice%"=="3" goto WINGET_ALL
+if "%wingchoice%"=="4" goto WINGET_SOURCE_UPDATE
+if "%wingchoice%"=="5" goto WINGET_REPORT
+
+echo.
+echo Invalid selection.
+timeout /t 2 >nul
+goto WINGET_MENU
+
+:WINGET_CHECK
+cls
+echo ============================================================
+echo AVAILABLE APPLICATION UPDATES
+echo ============================================================
+echo.
+call :WriteLog "WinGet available-updates check started"
+winget.exe list --upgrade-available --accept-source-agreements
+echo.
+pause
+goto WINGET_MENU
+
+:WINGET_SELECTED
+cls
+echo ============================================================
+echo UPDATE SELECTED APPLICATION
+echo ============================================================
+echo.
+echo Use the exact Package ID shown by WinGet.
+echo Example: Microsoft.PowerToys
+echo.
+setlocal DisableDelayedExpansion
+set "WINGET_ID="
+set /p "WINGET_ID=Package ID: "
+if not defined WINGET_ID (
+    endlocal
+    goto WINGET_MENU
+)
+echo.
+echo Selected package: %WINGET_ID%
+echo.
+choice /C YN /N /M "Update this application? [Y/N]: "
+if errorlevel 2 (
+    endlocal
+    goto WINGET_MENU
+)
+call :WriteLog "WinGet selected application update requested: %WINGET_ID%"
+winget.exe upgrade --id "%WINGET_ID%" --exact --accept-source-agreements --accept-package-agreements
+set "WINGET_RC=%errorlevel%"
+call :WriteLog "WinGet selected application update completed with exit code %WINGET_RC%: %WINGET_ID%"
+echo.
+endlocal
+pause
+goto WINGET_MENU
+
+:WINGET_ALL
+cls
+echo ============================================================
+echo UPDATE ALL AVAILABLE APPLICATIONS
+echo ============================================================
+echo.
+echo WinGet will attempt to update all eligible applications.
+echo Pinned packages and packages with unknown versions are not forced.
+echo Individual installers may still require interaction or a restart.
+echo.
+choice /C YN /N /M "Continue with Update All? [Y/N]: "
+if errorlevel 2 goto WINGET_MENU
+call :WriteLog "WinGet update-all started"
+winget.exe upgrade --all --accept-source-agreements --accept-package-agreements
+set "WINGET_RC=%errorlevel%"
+call :WriteLog "WinGet update-all completed with exit code %WINGET_RC%"
+echo.
+pause
+goto WINGET_MENU
+
+:WINGET_SOURCE_UPDATE
+cls
+echo ============================================================
+echo REFRESH WINGET SOURCES
+echo ============================================================
+echo.
+call :WriteLog "WinGet source refresh started"
+winget.exe source update
+set "WINGET_RC=%errorlevel%"
+call :WriteLog "WinGet source refresh completed with exit code %WINGET_RC%"
+echo.
+pause
+goto WINGET_MENU
+
+:WINGET_REPORT
+call :GenericMaintenanceReport "WinGetUpdates" "AppUpdates" "APPLICATION UPDATE REPORT"
+goto WINGET_MENU
+
+
+:: ============================================================
+:: REGISTRY DIAGNOSTIC / REPAIR CENTER
+:: ============================================================
+
+:REGISTRYCENTER
+:REGISTRY_MENU
+@echo off
+cls
+color 0A
+
+echo ============================================================
+echo REGISTRY DIAGNOSTIC / REPAIR CENTER
+echo ============================================================
+echo.
+echo [1]  Registry Health Overview
+echo [2]  Backup Registry Key
+echo [3]  Restore Registry Backup
+echo [4]  User Profile Registry Audit
+echo [5]  Explorer / Start Menu Policies
+echo [6]  Windows Update Registry Audit
+echo [7]  Network / Proxy Registry Audit
+echo [8]  Startup Registry Audit
+echo [9]  Security Policy Registry Audit
+echo [10] Search Registry
+echo [11] Registry Snapshot / Compare
+echo [12] Open Registry Editor
+echo [0]  Back to Main Menu
+echo.
+echo NOTE: Registry changes can affect Windows startup and user profiles.
+echo       Backup and restore actions require explicit confirmation.
+echo.
+
+set "regchoice="
+set /p "regchoice=Select an option: "
+
+if "%regchoice%"=="0" goto MENU
+if "%regchoice%"=="1" goto REG_HEALTH
+if "%regchoice%"=="2" goto REG_BACKUP
+if "%regchoice%"=="3" goto REG_RESTORE
+if "%regchoice%"=="4" goto REG_PROFILE
+if "%regchoice%"=="5" goto REG_EXPLORER
+if "%regchoice%"=="6" goto REG_WINDOWSUPDATE
+if "%regchoice%"=="7" goto REG_NETWORK
+if "%regchoice%"=="8" goto REG_STARTUP
+if "%regchoice%"=="9" goto REG_SECURITY
+if "%regchoice%"=="10" goto REG_SEARCH
+if "%regchoice%"=="11" goto REG_SNAPSHOT_MENU
+if "%regchoice%"=="12" goto REG_OPEN_EDITOR
+
+echo.
+echo Invalid selection.
+timeout /t 2 >nul
+goto REGISTRY_MENU
+
+:REG_HEALTH
+call :GenericMaintenanceReport "RegistryHealth" "RegistryHealth" "REGISTRY HEALTH OVERVIEW"
+goto REGISTRY_MENU
+
+:REG_PROFILE
+call :GenericMaintenanceReport "Profile" "UserProfileRegistry" "USER PROFILE REGISTRY AUDIT"
+goto REGISTRY_MENU
+
+:REG_EXPLORER
+call :GenericMaintenanceReport "RegistryExplorer" "RegistryExplorerPolicies" "EXPLORER / START MENU REGISTRY AUDIT"
+goto REGISTRY_MENU
+
+:REG_WINDOWSUPDATE
+call :GenericMaintenanceReport "RegistryWindowsUpdate" "RegistryWindowsUpdate" "WINDOWS UPDATE REGISTRY AUDIT"
+goto REGISTRY_MENU
+
+:REG_NETWORK
+call :GenericMaintenanceReport "RegistryNetwork" "RegistryNetworkProxy" "NETWORK / PROXY REGISTRY AUDIT"
+goto REGISTRY_MENU
+
+:REG_STARTUP
+call :GenericMaintenanceReport "RegistryStartup" "RegistryStartup" "STARTUP REGISTRY AUDIT"
+goto REGISTRY_MENU
+
+:REG_SECURITY
+call :GenericMaintenanceReport "RegistrySecurity" "RegistrySecurityPolicy" "SECURITY POLICY REGISTRY AUDIT"
+goto REGISTRY_MENU
+
+:REG_BACKUP
+@echo off
+cls
+setlocal DisableDelayedExpansion
+echo ============================================================
+echo BACKUP REGISTRY KEY
+echo ============================================================
+echo.
+echo Enter a registry key using REG.EXE notation.
+echo Example:
+echo HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList
+echo.
+set "REGKEY="
+set /p "REGKEY=Registry key: "
+if not defined REGKEY (
+    endlocal
+    goto REGISTRY_MENU
+)
+
+reg.exe query "%REGKEY%" >nul 2>&1
+if errorlevel 1 (
+    echo.
+    echo ERROR: Registry key was not found or could not be accessed.
+    echo.
+    pause
+    endlocal
+    goto REGISTRY_MENU
+)
+
+for /f %%A in ('powershell.exe -NoProfile -Command "Get-Date -Format yyyy-MM-dd_HH-mm-ss-fff"') do set "REGSTAMP=%%A"
+set "REGBACKUPDIR=%LOGDIR%\RegistryBackups\%COMPUTERNAME%"
+set "REGBACKUPFILE=%REGBACKUPDIR%\RegistryBackup-%REGSTAMP%.reg"
+set "REGMETAFILE=%REGBACKUPDIR%\RegistryBackup-%REGSTAMP%.txt"
+
+if not exist "%REGBACKUPDIR%" mkdir "%REGBACKUPDIR%" >nul 2>&1
+if not exist "%REGBACKUPDIR%" (
+    echo.
+    echo ERROR: Registry backup directory could not be created.
+    echo.
+    pause
+    endlocal
+    goto REGISTRY_MENU
+)
+
+echo.
+echo Registry key : %REGKEY%
+echo Backup file  : %REGBACKUPFILE%
+echo.
+choice /C YN /N /M "Export this registry key? [Y/N]: "
+if errorlevel 2 (
+    endlocal
+    goto REGISTRY_MENU
+)
+
+reg.exe export "%REGKEY%" "%REGBACKUPFILE%" /y
+set "REGRC=%errorlevel%"
+
+if "%REGRC%"=="0" (
+    >"%REGMETAFILE%" echo Raymond Endpoint Toolkit Registry Backup
+    >>"%REGMETAFILE%" echo Computer: %COMPUTERNAME%
+    >>"%REGMETAFILE%" echo User: %USERNAME%
+    >>"%REGMETAFILE%" echo Date: %DATE% %TIME%
+    >>"%REGMETAFILE%" echo Registry Key: %REGKEY%
+    >>"%REGMETAFILE%" echo Backup File: %REGBACKUPFILE%
+    call :WriteLog "Registry key exported: %REGKEY%"
+    echo.
+    echo Registry backup completed successfully.
+    echo.
+    start "" explorer.exe "%REGBACKUPDIR%"
+) else (
+    call :WriteLog "ERROR: Registry export failed with exit code %REGRC%"
+    echo.
+    echo ERROR: Registry export failed with exit code %REGRC%.
+)
+
+echo.
+pause
+endlocal
+goto REGISTRY_MENU
+
+:REG_RESTORE
+@echo off
+cls
+setlocal DisableDelayedExpansion
+echo ============================================================
+echo RESTORE REGISTRY BACKUP
+echo ============================================================
+echo.
+echo WARNING:
+echo Importing a .reg file changes the live Windows registry.
+echo Use only a backup you trust and understand.
+echo.
+echo Paste the full path to a .reg file.
+echo Example:
+echo E:\logs\RegistryBackups\PC01\RegistryBackup-2026-08-17.reg
+echo.
+set "REGRESTORE="
+set /p "REGRESTORE=Backup file: "
+set "REGRESTORE=%REGRESTORE:"=%"
+
+if not defined REGRESTORE (
+    endlocal
+    goto REGISTRY_MENU
+)
+
+if not exist "%REGRESTORE%" (
+    echo.
+    echo ERROR: File not found.
+    echo.
+    pause
+    endlocal
+    goto REGISTRY_MENU
+)
+
+for %%F in ("%REGRESTORE%") do if /I not "%%~xF"==".reg" (
+    echo.
+    echo ERROR: The selected file is not a .reg registry export.
+    echo.
+    pause
+    endlocal
+    goto REGISTRY_MENU
+)
+
+echo.
+echo File to import:
+echo %REGRESTORE%
+echo.
+choice /C YN /N /M "Import this registry backup? [Y/N]: "
+if errorlevel 2 (
+    endlocal
+    goto REGISTRY_MENU
+)
+
+echo.
+choice /C YN /N /M "FINAL CONFIRMATION - modify the Windows registry? [Y/N]: "
+if errorlevel 2 (
+    endlocal
+    goto REGISTRY_MENU
+)
+
+reg.exe import "%REGRESTORE%"
+set "REGRC=%errorlevel%"
+
+if "%REGRC%"=="0" (
+    call :WriteLog "Registry backup imported: %REGRESTORE%"
+    echo.
+    echo Registry import completed successfully.
+    echo Restart or sign out if the restored setting requires it.
+) else (
+    call :WriteLog "ERROR: Registry import failed with exit code %REGRC%"
+    echo.
+    echo ERROR: Registry import failed with exit code %REGRC%.
+)
+
+echo.
+pause
+endlocal
+goto REGISTRY_MENU
+
+:REG_SEARCH
+@echo off
+cls
+setlocal DisableDelayedExpansion
+echo ============================================================
+echo SEARCH REGISTRY
+echo ============================================================
+echo.
+echo Searches common diagnostic registry locations for matching
+echo key names, value names, and value data.
+echo.
+echo Broad searches can take several minutes.
+echo.
+set "REGSEARCH="
+set /p "REGSEARCH=Search term: "
+set "REGSEARCH=%REGSEARCH:"=%"
+if not defined REGSEARCH (
+    endlocal
+    goto REGISTRY_MENU
+)
+
+for /f %%A in ('powershell.exe -NoProfile -Command "Get-Date -Format yyyy-MM-dd_HH-mm-ss-fff"') do set "REGSTAMP=%%A"
+set "REGSEARCHREPORT=%LOGDIR%\RegistrySearch-%COMPUTERNAME%-%REGSTAMP%.html"
+
+echo.
+echo Searching registry. Please wait...
+echo.
+call :WriteLog "Registry search started"
+call :RunMaintenanceModule "RegistrySearch" "%REGSEARCHREPORT%" "%REGSEARCH%"
+set "REGRC=%errorlevel%"
+
+if "%REGRC%"=="0" (
+    if exist "%REGSEARCHREPORT%" (
+        call :WriteLog "Registry search report created: %REGSEARCHREPORT%"
+        start "" "%REGSEARCHREPORT%"
+    ) else (
+        echo.
+        echo ERROR: Registry search completed but the report file was not created.
+    )
+) else (
+    echo.
+    echo ERROR: Registry search failed with exit code %REGRC%.
+)
+
+echo.
+pause
+endlocal
+goto REGISTRY_MENU
+
+:REG_SNAPSHOT_MENU
+@echo off
+cls
+echo ============================================================
+echo REGISTRY SNAPSHOT / COMPARE
+echo ============================================================
+echo.
+echo [1] Create Troubleshooting Snapshot
+echo [2] Compare Two Saved Snapshots
+echo [0] Back to Registry Center
+echo.
+set "regsnapchoice="
+set /p "regsnapchoice=Select an option: "
+if "%regsnapchoice%"=="0" goto REGISTRY_MENU
+if "%regsnapchoice%"=="1" goto REG_SNAPSHOT_CREATE
+if "%regsnapchoice%"=="2" goto REG_SNAPSHOT_COMPARE
+
+echo.
+echo Invalid selection.
+timeout /t 2 >nul
+goto REG_SNAPSHOT_MENU
+
+:REG_SNAPSHOT_CREATE
+@echo off
+cls
+call :NewReportTimestamp
+set "REGSNAPDIR=%LOGDIR%\RegistrySnapshots\%COMPUTERNAME%"
+set "REGSNAPSHOT=%REGSNAPDIR%\RegistrySnapshot-%COMPUTERNAME%-%REPORTSTAMP%.json"
+if not exist "%REGSNAPDIR%" mkdir "%REGSNAPDIR%" >nul 2>&1
+
+echo ============================================================
+echo CREATE REGISTRY TROUBLESHOOTING SNAPSHOT
+echo ============================================================
+echo.
+echo This captures selected troubleshooting registry locations used by
+echo Windows profiles, policies, startup, networking, RDP and shell settings.
+echo It is NOT a complete backup of the Windows registry.
+echo.
+echo Snapshot:
+echo %REGSNAPSHOT%
+echo.
+choice /C YN /N /M "Create snapshot? [Y/N]: "
+if errorlevel 2 goto REG_SNAPSHOT_MENU
+
+call :WriteLog "Registry troubleshooting snapshot started"
+call :RunMaintenanceModule "RegistrySnapshot" "" "%REGSNAPSHOT%"
+set "REGRC=%errorlevel%"
+
+if "%REGRC%"=="0" (
+    if exist "%REGSNAPSHOT%" (
+        call :WriteLog "Registry snapshot created: %REGSNAPSHOT%"
+        echo.
+        echo Registry snapshot created successfully.
+        start "" explorer.exe "%REGSNAPDIR%"
+    ) else (
+        echo.
+        echo ERROR: Snapshot module completed but the snapshot file was not created.
+    )
+) else (
+    echo.
+    echo ERROR: Registry snapshot failed with exit code %REGRC%.
+)
+
+echo.
+pause
+goto REG_SNAPSHOT_MENU
+
+:REG_SNAPSHOT_COMPARE
+@echo off
+cls
+setlocal DisableDelayedExpansion
+echo ============================================================
+echo COMPARE REGISTRY SNAPSHOTS
+echo ============================================================
+echo.
+echo Paste two snapshot JSON paths created by this toolkit.
+echo.
+set "REGBASE="
+set "REGNEW="
+set /p "REGBASE=Baseline snapshot : "
+set "REGBASE=%REGBASE:"=%"
+if not defined REGBASE (
+    endlocal
+    goto REG_SNAPSHOT_MENU
+)
+if not exist "%REGBASE%" (
+    echo.
+    echo ERROR: Baseline snapshot was not found.
+    echo.
+    pause
+    endlocal
+    goto REG_SNAPSHOT_MENU
+)
+
+echo.
+set /p "REGNEW=Comparison snapshot: "
+set "REGNEW=%REGNEW:"=%"
+if not defined REGNEW (
+    endlocal
+    goto REG_SNAPSHOT_MENU
+)
+if not exist "%REGNEW%" (
+    echo.
+    echo ERROR: Comparison snapshot was not found.
+    echo.
+    pause
+    endlocal
+    goto REG_SNAPSHOT_MENU
+)
+
+for /f %%A in ('powershell.exe -NoProfile -Command "Get-Date -Format yyyy-MM-dd_HH-mm-ss-fff"') do set "REGSTAMP=%%A"
+set "REGCOMPAREREPORT=%LOGDIR%\RegistryCompare-%COMPUTERNAME%-%REGSTAMP%.html"
+
+echo.
+echo Comparing snapshots...
+echo.
+call :WriteLog "Registry snapshot comparison started"
+call :RunMaintenanceModule "RegistryCompare" "%REGCOMPAREREPORT%" "%REGBASE%|%REGNEW%"
+set "REGRC=%errorlevel%"
+
+if "%REGRC%"=="0" (
+    if exist "%REGCOMPAREREPORT%" (
+        call :WriteLog "Registry comparison report created: %REGCOMPAREREPORT%"
+        start "" "%REGCOMPAREREPORT%"
+    ) else (
+        echo.
+        echo ERROR: Comparison completed but the report file was not created.
+    )
+) else (
+    echo.
+    echo ERROR: Registry comparison failed with exit code %REGRC%.
+)
+
+echo.
+pause
+endlocal
+goto REG_SNAPSHOT_MENU
+
+:REG_OPEN_EDITOR
+call :WriteLog "Registry Editor opened"
+start "" regedit.exe
+goto REGISTRY_MENU
+
+
+:: ============================================================
 :: GENERIC MAINTENANCE REPORT LAUNCHER
 :: ============================================================
 
@@ -6161,8 +6704,10 @@ endlocal & exit /b %MAINTRC%
 param(
     [Parameter(Mandatory=$true)]
     [ValidateSet(
-        'Drivers','System','DiskHealth','Processes','BitLocker',
-        'Performance','Startup','Power','Profile',
+        'Drivers','System','Network','DiskHealth','Processes','BitLocker',
+        'Performance','Startup','Power','Profile','WinGetUpdates',
+        'RegistryHealth','RegistryExplorer','RegistryWindowsUpdate','RegistryNetwork',
+        'RegistryStartup','RegistrySecurity','RegistrySearch','RegistrySnapshot','RegistryCompare',
         'TempCleanup','OptimizeVolume','UpdateServices','UpdateReset',
         'ShellRestartExplorer','ShellRestartHosts',
         'ShellReregisterShell','ShellReregisterStart','ShellReregisterBoth'
@@ -6298,6 +6843,100 @@ function Invoke-PowerCfgText {
     catch { return $_.Exception.Message }
 }
 
+function Convert-RegistryDataToText {
+    param($Value)
+    if ($null -eq $Value) { return '' }
+    if ($Value -is [byte[]]) { return ([BitConverter]::ToString($Value)) }
+    if ($Value -is [System.Array]) { return (($Value | ForEach-Object {[string]$_}) -join ' | ') }
+    return [string]$Value
+}
+
+function Get-RegistryValueRows {
+    param(
+        [string[]]$Paths,
+        [string]$DefaultAssessment = 'Info',
+        [switch]$Recurse
+    )
+
+    $rows = @()
+    foreach ($root in $Paths) {
+        if (-not (Test-Path -LiteralPath $root)) { continue }
+
+        $keys = @()
+        try {
+            $keys += Get-Item -LiteralPath $root -ErrorAction SilentlyContinue
+            if ($Recurse) {
+                $keys += Get-ChildItem -LiteralPath $root -Recurse -ErrorAction SilentlyContinue
+            }
+        }
+        catch {}
+
+        foreach ($key in $keys) {
+            if (-not $key) { continue }
+            $props = Get-ItemProperty -LiteralPath $key.PSPath -ErrorAction SilentlyContinue
+            if (-not $props) { continue }
+
+            foreach ($prop in @($props.PSObject.Properties | Where-Object {$_.Name -notmatch '^PS(Path|ParentPath|ChildName|Drive|Provider)$'})) {
+                $kind = ''
+                try { $kind = $key.GetValueKind($prop.Name).ToString() } catch {}
+                $rows += [PSCustomObject]@{
+                    Key = $key.Name
+                    Name = $prop.Name
+                    Type = $kind
+                    Value = Convert-RegistryDataToText $prop.Value
+                    Assessment = $DefaultAssessment
+                }
+            }
+        }
+    }
+    return $rows
+}
+
+function Get-ToolkitRegistrySnapshotRows {
+    $roots = @(
+        'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run',
+        'HKCU:\Software\Microsoft\Windows\CurrentVersion\RunOnce',
+        'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run',
+        'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce',
+        'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Run',
+        'HKLM:\SOFTWARE\Policies\Microsoft\Windows',
+        'HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies',
+        'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies',
+        'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\ProfileList',
+        'HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings',
+        'HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters',
+        'HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server'
+    )
+
+    $rows = @()
+    foreach ($root in $roots) {
+        if (-not (Test-Path -LiteralPath $root)) { continue }
+        $keys = @()
+        try {
+            $keys += Get-Item -LiteralPath $root -ErrorAction SilentlyContinue
+            $keys += Get-ChildItem -LiteralPath $root -Recurse -ErrorAction SilentlyContinue
+        }
+        catch {}
+
+        foreach ($key in $keys) {
+            if (-not $key) { continue }
+            $props = Get-ItemProperty -LiteralPath $key.PSPath -ErrorAction SilentlyContinue
+            if (-not $props) { continue }
+            foreach ($prop in @($props.PSObject.Properties | Where-Object {$_.Name -notmatch '^PS(Path|ParentPath|ChildName|Drive|Provider)$'})) {
+                $kind = ''
+                try { $kind = $key.GetValueKind($prop.Name).ToString() } catch {}
+                $rows += [PSCustomObject]@{
+                    Key = [string]$key.Name
+                    Name = [string]$prop.Name
+                    Type = [string]$kind
+                    Value = Convert-RegistryDataToText $prop.Value
+                }
+            }
+        }
+    }
+    return @($rows | Sort-Object Key,Name -Unique)
+}
+
 try {
 
 switch ($Mode) {
@@ -6349,6 +6988,74 @@ switch ($Mode) {
     $html += Add-HtmlTable 'Graphics' $gpuRows ([ordered]@{GPU='GPU';DriverVersion='Driver Version';VideoMode='Video Mode';AdapterRAMGB='Adapter RAM GB'})
     $netRows=@(Get-NetAdapter -ErrorAction SilentlyContinue | Sort-Object Status,Name | ForEach-Object {[PSCustomObject]@{Name=$_.Name;Description=$_.InterfaceDescription;Status=$_.Status;LinkSpeed=$_.LinkSpeed;MacAddress=$_.MacAddress}})
     $html += Add-HtmlTable 'Network Adapters' $netRows ([ordered]@{Name='Adapter';Description='Description';Status='Status';LinkSpeed='Link Speed';MacAddress='MAC Address'})
+    $html += Close-HtmlReport
+    Write-HtmlReport $html
+}
+
+ 'Network' {
+    $html = New-HtmlHeader 'Full Network Report' 'Comprehensive local network configuration, addressing, DNS, routing, proxy and active-interface information.'
+
+    $adapterRows = @(Get-NetAdapter -ErrorAction SilentlyContinue | Sort-Object Status,Name | ForEach-Object {
+        [PSCustomObject]@{
+            Name=$_.Name
+            Description=$_.InterfaceDescription
+            Status=$_.Status
+            LinkSpeed=$_.LinkSpeed
+            MacAddress=$_.MacAddress
+            MediaType=$_.MediaType
+            PhysicalMediaType=$_.PhysicalMediaType
+        }
+    })
+    $html += Add-HtmlTable 'Network Adapters' $adapterRows ([ordered]@{Name='Adapter';Description='Description';Status='Status';LinkSpeed='Link Speed';MacAddress='MAC Address';MediaType='Media Type';PhysicalMediaType='Physical Media Type'}) 'No network adapters were returned.'
+
+    $configRows = @()
+    foreach($cfg in @(Get-NetIPConfiguration -ErrorAction SilentlyContinue)) {
+        $ipv4 = @($cfg.IPv4Address | ForEach-Object {$_.IPAddress}) -join ', '
+        $ipv6 = @($cfg.IPv6Address | ForEach-Object {$_.IPAddress}) -join ', '
+        $gateway = @($cfg.IPv4DefaultGateway | ForEach-Object {$_.NextHop}) -join ', '
+        $dns = @($cfg.DNSServer.ServerAddresses) -join ', '
+        $configRows += [PSCustomObject]@{
+            Interface=$cfg.InterfaceAlias
+            Description=$cfg.InterfaceDescription
+            IPv4=$ipv4
+            IPv6=$ipv6
+            DefaultGateway=$gateway
+            DNSServers=$dns
+            NetProfile=if($cfg.NetProfile){$cfg.NetProfile.Name}else{''}
+        }
+    }
+    $html += Add-HtmlTable 'IP Configuration' $configRows ([ordered]@{Interface='Interface';Description='Description';IPv4='IPv4';IPv6='IPv6';DefaultGateway='Default Gateway';DNSServers='DNS Servers';NetProfile='Network Profile'}) 'No IP configuration was returned.'
+
+    $dnsRows = @(Get-DnsClientServerAddress -ErrorAction SilentlyContinue | Where-Object {$_.ServerAddresses.Count -gt 0} | ForEach-Object {
+        [PSCustomObject]@{Interface=$_.InterfaceAlias;Family=$_.AddressFamily;Servers=($_.ServerAddresses -join ', ')}
+    })
+    $html += Add-HtmlTable 'DNS Server Configuration' $dnsRows ([ordered]@{Interface='Interface';Family='Address Family';Servers='DNS Servers'}) 'No DNS server addresses were returned.'
+
+    $routeRows = @(Get-NetRoute -ErrorAction SilentlyContinue | Sort-Object RouteMetric,DestinationPrefix | Select-Object -First 250 | ForEach-Object {
+        [PSCustomObject]@{Destination=$_.DestinationPrefix;NextHop=$_.NextHop;Interface=$_.InterfaceAlias;Metric=$_.RouteMetric;Protocol=$_.Protocol;State=$_.State}
+    })
+    $html += Add-HtmlTable 'Routing Table' $routeRows ([ordered]@{Destination='Destination';NextHop='Next Hop';Interface='Interface';Metric='Metric';Protocol='Protocol';State='State'}) 'No route information was returned.'
+
+    $cacheRows = @(Get-DnsClientCache -ErrorAction SilentlyContinue | Sort-Object Entry,Type | Select-Object -First 500 | ForEach-Object {
+        [PSCustomObject]@{Entry=$_.Entry;Type=$_.Type;Data=$_.Data;TimeToLive=$_.TimeToLive;Status=$_.Status}
+    })
+    $html += Add-HtmlTable 'DNS Resolver Cache - First 500 Records' $cacheRows ([ordered]@{Entry='Entry';Type='Type';Data='Data';TimeToLive='TTL';Status='Status'}) 'DNS cache is empty or could not be queried.'
+
+    $profiles = @(Get-NetConnectionProfile -ErrorAction SilentlyContinue | ForEach-Object {
+        [PSCustomObject]@{Name=$_.Name;InterfaceAlias=$_.InterfaceAlias;Category=$_.NetworkCategory;IPv4Connectivity=$_.IPv4Connectivity;IPv6Connectivity=$_.IPv6Connectivity}
+    })
+    $html += Add-HtmlTable 'Network Connection Profiles' $profiles ([ordered]@{Name='Profile';InterfaceAlias='Interface';Category='Category';IPv4Connectivity='IPv4 Connectivity';IPv6Connectivity='IPv6 Connectivity'}) 'No network connection profiles were returned.'
+
+    $ipconfigText = ((& ipconfig.exe /all 2>&1) | Out-String).Trim()
+    $routeText = ((& route.exe print 2>&1) | Out-String).Trim()
+    $proxyText = ((& netsh.exe winhttp show proxy 2>&1) | Out-String).Trim()
+    $wifiText = ((& netsh.exe wlan show interfaces 2>&1) | Out-String).Trim()
+
+    $html += '<h2>WinHTTP Proxy</h2><pre>' + (HtmlEncodeValue $proxyText) + '</pre>'
+    $html += '<h2>Wi-Fi Interface Details</h2><pre>' + (HtmlEncodeValue $wifiText) + '</pre>'
+    $html += '<h2>IPCONFIG /ALL</h2><pre>' + (HtmlEncodeValue $ipconfigText) + '</pre>'
+    $html += '<h2>ROUTE PRINT</h2><pre>' + (HtmlEncodeValue $routeText) + '</pre>'
+    $html += '<p class="note">This report is a point-in-time snapshot. VPN, Wi-Fi, DHCP, DNS and route information can change after collection.</p>'
     $html += Close-HtmlReport
     Write-HtmlReport $html
 }
@@ -6624,6 +7331,341 @@ switch ($Mode) {
     Write-HtmlReport $html
 }
 
+ 'WinGetUpdates' {
+    $html = New-HtmlHeader 'Application Update Report' 'Windows Package Manager inventory of applications that currently have an available upgrade.'
+    $winget = Get-Command winget.exe -ErrorAction SilentlyContinue
+    if (-not $winget) {
+        $rows = @([PSCustomObject]@{Item='WinGet';Value='Not found';Assessment='Review'})
+        $html += Add-HtmlTable 'WinGet Status' $rows ([ordered]@{Item='Item';Value='Value';Assessment='Assessment'})
+        $html += '<p class="note">WinGet is normally supplied by Microsoft App Installer. The toolkit does not install it automatically.</p>'
+    }
+    else {
+        $versionText = ((& $winget.Source --version 2>&1) | Out-String).Trim()
+        $sourceText = ((& $winget.Source source list 2>&1) | Out-String).Trim()
+        $updateText = ((& $winget.Source list --upgrade-available --accept-source-agreements --disable-interactivity 2>&1) | Out-String).Trim()
+        $statusRows = @(
+            [PSCustomObject]@{Item='Executable';Value=$winget.Source;Assessment='Good'},
+            [PSCustomObject]@{Item='Version';Value=$versionText;Assessment='Good'}
+        )
+        $html += Add-HtmlTable 'WinGet Status' $statusRows ([ordered]@{Item='Item';Value='Value';Assessment='Assessment'})
+        $html += '<h2>Configured Sources</h2><pre>' + (HtmlEncodeValue $sourceText) + '</pre>'
+        $html += '<h2>Applications With Available Updates</h2><pre>' + (HtmlEncodeValue $updateText) + '</pre>'
+        $html += '<p class="note">The update list is intentionally preserved as WinGet output because package names, versions and sources vary by machine and locale. Pinned packages may not appear as normal update candidates.</p>'
+    }
+    $html += Close-HtmlReport
+    Write-HtmlReport $html
+}
+
+ 'RegistryHealth' {
+    $html = New-HtmlHeader 'Registry Health Overview' 'Read-only registry and hive health checks for endpoint troubleshooting. This report does not clean or rewrite the registry.'
+
+    $hiveChecks = @(
+        @{Name='HKLM - SYSTEM';Path='HKLM:\SYSTEM';File=(Join-Path $env:WINDIR 'System32\config\SYSTEM')},
+        @{Name='HKLM - SOFTWARE';Path='HKLM:\SOFTWARE';File=(Join-Path $env:WINDIR 'System32\config\SOFTWARE')},
+        @{Name='HKLM - SAM';Path='HKLM:\SAM';File=(Join-Path $env:WINDIR 'System32\config\SAM');Protected=$true},
+        @{Name='HKLM - SECURITY';Path='HKLM:\SECURITY';File=(Join-Path $env:WINDIR 'System32\config\SECURITY');Protected=$true},
+        @{Name='HKU - DEFAULT';Path='Registry::HKEY_USERS\.DEFAULT';File=(Join-Path $env:WINDIR 'System32\config\DEFAULT')},
+        @{Name='HKCU';Path='HKCU:\';File=''}
+    )
+
+    $hiveRows = @()
+    foreach ($h in $hiveChecks) {
+        $accessible = Test-Path -LiteralPath $h.Path
+        $fileExists = if ($h.File) { Test-Path -LiteralPath $h.File } else { $true }
+        $sizeMB = ''
+        $lastWrite = ''
+        if ($h.File -and $fileExists) {
+            $f = Get-Item -LiteralPath $h.File -ErrorAction SilentlyContinue
+            if ($f) { $sizeMB=[math]::Round($f.Length/1MB,2); $lastWrite=$f.LastWriteTime }
+        }
+        $assessment = if (-not $fileExists) {'High'} elseif (-not $accessible -and $h.Protected) {'Info'} elseif (-not $accessible) {'Review'} else {'Good'}
+        $hiveRows += [PSCustomObject]@{Hive=$h.Name;Accessible=$accessible;HiveFile=$h.File;FileExists=$fileExists;SizeMB=$sizeMB;LastWrite=$lastWrite;Assessment=$assessment}
+    }
+    $html += Add-HtmlTable 'Registry Hive Availability' $hiveRows ([ordered]@{Hive='Hive';Accessible='Accessible';HiveFile='Hive File';FileExists='File Exists';SizeMB='Size MB';LastWrite='Last Modified';Assessment='Assessment'})
+
+    $regBackPath = Join-Path $env:WINDIR 'System32\config\RegBack'
+    $regBackRows = @()
+    foreach ($name in @('SYSTEM','SOFTWARE','SAM','SECURITY','DEFAULT')) {
+        $file = Join-Path $regBackPath $name
+        $item = Get-Item -LiteralPath $file -ErrorAction SilentlyContinue
+        $regBackRows += [PSCustomObject]@{
+            Hive=$name
+            File=$file
+            Exists=[bool]$item
+            SizeMB=if($item){[math]::Round($item.Length/1MB,2)}else{''}
+            LastWrite=if($item){$item.LastWriteTime}else{''}
+            Assessment='Info'
+        }
+    }
+    $html += Add-HtmlTable 'RegBack Folder Status' $regBackRows ([ordered]@{Hive='Hive';File='File';Exists='Exists';SizeMB='Size MB';LastWrite='Last Modified';Assessment='Assessment'})
+    $html += '<p class="note">Modern Windows versions may leave RegBack hive files at zero bytes by design. A zero-byte RegBack file alone is not treated as registry corruption.</p>'
+
+    $eventRows = @()
+    try {
+        $events = @(Get-WinEvent -FilterHashtable @{LogName=@('System','Application');StartTime=(Get-Date).AddDays(-7)} -ErrorAction SilentlyContinue |
+            Where-Object { $_.Message -match '(?i)registry|registry hive|hive file' } |
+            Select-Object -First 50)
+        foreach($e in $events){
+            $eventRows += [PSCustomObject]@{Time=$e.TimeCreated;Log=$e.LogName;Level=$e.LevelDisplayName;EventID=$e.Id;Provider=$e.ProviderName;Message=$e.Message;Assessment=if($e.LevelDisplayName -in @('Critical','Error')){'Review'}else{'Info'}}
+        }
+    }
+    catch {}
+    $html += Add-HtmlTable 'Recent Registry-Related Events' $eventRows ([ordered]@{Time='Time';Log='Log';Level='Level';EventID='Event ID';Provider='Provider';Message='Message';Assessment='Assessment'}) 'No recent registry-related events were returned.'
+    $html += Close-HtmlReport
+    Write-HtmlReport $html
+}
+
+'RegistryExplorer' {
+    $html = New-HtmlHeader 'Explorer / Start Menu Registry Audit' 'Explorer, Start menu and Winlogon registry settings that can affect the Windows shell. Policy values may be intentional in managed environments.'
+
+    $policyPaths = @(
+        'HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer',
+        'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer',
+        'HKCU:\Software\Microsoft\Windows\CurrentVersion\Policies\System',
+        'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System'
+    )
+    $policyRows = @(Get-RegistryValueRows -Paths $policyPaths)
+    foreach($row in $policyRows){
+        if ($row.Name -match '^(NoClose|NoRun|NoControlPanel|DisableTaskMgr|NoViewContextMenu|NoDesktop|NoLogoff|NoSetTaskbar|NoTrayContextMenu)$' -and [string]$row.Value -notin @('0','')) {
+            $row.Assessment='Review'
+        }
+    }
+    $html += Add-HtmlTable 'Explorer / System Policy Values' $policyRows ([ordered]@{Key='Registry Key';Name='Value';Type='Type';Value='Data';Assessment='Assessment'}) 'No Explorer/System policy values were configured in the checked locations.'
+
+    $winlogon = Get-ItemProperty -LiteralPath 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon' -ErrorAction SilentlyContinue
+    $shell = [string]$winlogon.Shell
+    $userinit = [string]$winlogon.Userinit
+    $shellRows = @(
+        [PSCustomObject]@{Setting='Winlogon Shell';Value=$shell;Expected='explorer.exe';Assessment=if($shell -and $shell.Trim().ToLower() -eq 'explorer.exe'){'Good'}else{'Review'}},
+        [PSCustomObject]@{Setting='Winlogon Userinit';Value=$userinit;Expected='%SystemRoot%\system32\userinit.exe,';Assessment=if($userinit -match '(?i)\\userinit\.exe,?\s*$'){'Good'}else{'Review'}}
+    )
+    $html += Add-HtmlTable 'Winlogon Shell Values' $shellRows ([ordered]@{Setting='Setting';Value='Current Value';Expected='Expected';Assessment='Assessment'})
+    $html += '<p class="note">A configured policy is not automatically an error. Domain, Intune, security baselines, kiosk settings and accessibility requirements can intentionally configure these values.</p>'
+    $html += Close-HtmlReport
+    Write-HtmlReport $html
+}
+
+'RegistryWindowsUpdate' {
+    $html = New-HtmlHeader 'Windows Update Registry Audit' 'Registry-backed Windows Update policy and target-version settings.'
+    $paths = @(
+        'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate',
+        'HKLM:\SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate\AU',
+        'HKLM:\SOFTWARE\Microsoft\WindowsUpdate\UX\Settings'
+    )
+    $rows = @(Get-RegistryValueRows -Paths $paths)
+    foreach($row in $rows){
+        switch -Regex ($row.Name) {
+            '^(DisableWindowsUpdateAccess|NoAutoUpdate)$' { if([string]$row.Value -notin @('0','')){$row.Assessment='Review'} }
+            '^(WUServer|WUStatusServer|TargetReleaseVersion|TargetReleaseVersionInfo|ProductVersion|UseWUServer)$' { $row.Assessment='Info' }
+            '^DoNotConnectToWindowsUpdateInternetLocations$' { if([string]$row.Value -notin @('0','')){$row.Assessment='Review'} }
+        }
+    }
+    $html += Add-HtmlTable 'Windows Update Registry Settings' $rows ([ordered]@{Key='Registry Key';Name='Value';Type='Type';Value='Data';Assessment='Assessment'}) 'No Windows Update values were returned from the checked locations.'
+    $html += '<p class="note">WSUS, target-release and Windows Update policy values are often intentionally configured by enterprise management. Review them against the organization standard rather than treating their presence as a fault.</p>'
+    $html += Close-HtmlReport
+    Write-HtmlReport $html
+}
+
+'RegistryNetwork' {
+    $html = New-HtmlHeader 'Network / Proxy Registry Audit' 'User proxy, PAC, TCP/IP, DNS override and hosts-file settings that can affect endpoint connectivity.'
+
+    $internet = Get-ItemProperty -LiteralPath 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings' -ErrorAction SilentlyContinue
+    $proxyRows = @(
+        [PSCustomObject]@{Setting='ProxyEnable';Value=$internet.ProxyEnable;Assessment=if([int]$internet.ProxyEnable -eq 1){'Review'}else{'Good'}},
+        [PSCustomObject]@{Setting='ProxyServer';Value=$internet.ProxyServer;Assessment=if($internet.ProxyServer){'Review'}else{'Info'}},
+        [PSCustomObject]@{Setting='AutoConfigURL';Value=$internet.AutoConfigURL;Assessment=if($internet.AutoConfigURL){'Review'}else{'Info'}},
+        [PSCustomObject]@{Setting='AutoDetect';Value=$internet.AutoDetect;Assessment='Info'}
+    )
+    $html += Add-HtmlTable 'Current User Internet Settings' $proxyRows ([ordered]@{Setting='Setting';Value='Value';Assessment='Assessment'})
+
+    $winHttp = ''
+    try { $winHttp = ((& netsh.exe winhttp show proxy 2>&1) | Out-String).Trim() } catch { $winHttp=$_.Exception.Message }
+    $html += '<h2>WinHTTP Proxy</h2><pre>' + (HtmlEncodeValue $winHttp) + '</pre>'
+
+    $tcpPaths = @('HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters')
+    $tcpRows = @(Get-RegistryValueRows -Paths $tcpPaths)
+    $tcpRows = @($tcpRows | Where-Object {$_.Name -match '^(NameServer|DhcpNameServer|Domain|NV Domain|SearchList|EnableICMPRedirect|IPEnableRouter)$'})
+    foreach($row in $tcpRows){ if($row.Name -in @('NameServer','SearchList') -and $row.Value){$row.Assessment='Review'} }
+    $html += Add-HtmlTable 'TCP/IP Registry Settings' $tcpRows ([ordered]@{Key='Registry Key';Name='Value';Type='Type';Value='Data';Assessment='Assessment'}) 'No selected TCP/IP values were returned.'
+
+    $dnsRows = @()
+    foreach($key in @(Get-ChildItem -LiteralPath 'HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces' -ErrorAction SilentlyContinue)){
+        $p=Get-ItemProperty -LiteralPath $key.PSPath -ErrorAction SilentlyContinue
+        if($p.NameServer -or $p.DhcpNameServer){
+            $dnsRows += [PSCustomObject]@{Interface=$key.PSChildName;StaticDNS=$p.NameServer;DhcpDNS=$p.DhcpNameServer;Assessment=if($p.NameServer){'Review'}else{'Info'}}
+        }
+    }
+    $html += Add-HtmlTable 'Interface DNS Registry Values' $dnsRows ([ordered]@{Interface='Interface GUID';StaticDNS='Static DNS';DhcpDNS='DHCP DNS';Assessment='Assessment'}) 'No interface DNS registry values were returned.'
+
+    $hostsPath = Join-Path $env:WINDIR 'System32\drivers\etc\hosts'
+    $hostsRows=@()
+    if(Test-Path -LiteralPath $hostsPath){
+        foreach($line in @(Get-Content -LiteralPath $hostsPath -ErrorAction SilentlyContinue)){
+            $trim=$line.Trim()
+            if($trim -and -not $trim.StartsWith('#')){$hostsRows += [PSCustomObject]@{Entry=$trim;Assessment='Review'}}
+        }
+    }
+    $html += Add-HtmlTable 'Custom Hosts File Entries' $hostsRows ([ordered]@{Entry='Entry';Assessment='Assessment'}) 'No active custom hosts-file entries were found.'
+    $html += '<p class="note">Proxies, PAC files, static DNS and hosts-file entries can be legitimate. They are surfaced for technician review because stale or unexpected values frequently cause connectivity issues.</p>'
+    $html += Close-HtmlReport
+    Write-HtmlReport $html
+}
+
+'RegistryStartup' {
+    $html = New-HtmlHeader 'Startup Registry Audit' 'Run and RunOnce registry entries with executable path and Authenticode review where resolvable.'
+    $paths = @(
+        'HKCU:\Software\Microsoft\Windows\CurrentVersion\Run',
+        'HKCU:\Software\Microsoft\Windows\CurrentVersion\RunOnce',
+        'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Run',
+        'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\RunOnce',
+        'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Run',
+        'HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\RunOnce'
+    )
+    $rows=@()
+    foreach($path in $paths){
+        if(-not (Test-Path -LiteralPath $path)){continue}
+        $p=Get-ItemProperty -LiteralPath $path -ErrorAction SilentlyContinue
+        foreach($prop in @($p.PSObject.Properties | Where-Object {$_.Name -notmatch '^PS(Path|ParentPath|ChildName|Drive|Provider)$'})){
+            $command=[string]$prop.Value
+            $exe=Get-ExecutableFromCommand $command
+            $sig=Get-SignatureSummary $exe
+            $assessment='Info'
+            if($exe -and -not (Test-Path -LiteralPath $exe)){$assessment='High'}
+            elseif($command -match '(?i)\\Temp\\|\\Downloads\\'){$assessment='Review'}
+            elseif($exe -and (Test-Path -LiteralPath $exe) -and $sig -notlike 'Valid*'){$assessment='Review'}
+            $rows += [PSCustomObject]@{Location=$path;Name=$prop.Name;Command=$command;Executable=$exe;Signature=$sig;Assessment=$assessment}
+        }
+    }
+    $html += Add-HtmlTable 'Run / RunOnce Entries' $rows ([ordered]@{Location='Location';Name='Value Name';Command='Command';Executable='Executable';Signature='Signature';Assessment='Assessment'}) 'No Run/RunOnce registry startup entries were found.'
+    $html += Close-HtmlReport
+    Write-HtmlReport $html
+}
+
+'RegistrySecurity' {
+    $html = New-HtmlHeader 'Security Policy Registry Audit' 'Selected registry-backed Windows security settings. Results should be compared with the organization security baseline.'
+
+    $uac = Get-ItemProperty -LiteralPath 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System' -ErrorAction SilentlyContinue
+    $rdp = Get-ItemProperty -LiteralPath 'HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server' -ErrorAction SilentlyContinue
+    $rdpTcp = Get-ItemProperty -LiteralPath 'HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -ErrorAction SilentlyContinue
+    $lsa = Get-ItemProperty -LiteralPath 'HKLM:\SYSTEM\CurrentControlSet\Control\Lsa' -ErrorAction SilentlyContinue
+    $smb = Get-ItemProperty -LiteralPath 'HKLM:\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters' -ErrorAction SilentlyContinue
+    $defender = Get-ItemProperty -LiteralPath 'HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender' -ErrorAction SilentlyContinue
+    $defenderRt = Get-ItemProperty -LiteralPath 'HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender\Real-Time Protection' -ErrorAction SilentlyContinue
+    $wshMachine = Get-ItemProperty -LiteralPath 'HKLM:\SOFTWARE\Microsoft\Windows Script Host\Settings' -ErrorAction SilentlyContinue
+
+    $rdpEnabled = ([int]$rdp.fDenyTSConnections -eq 0)
+    $rows = @(
+        [PSCustomObject]@{Area='UAC';Setting='EnableLUA';Value=$uac.EnableLUA;Assessment=if([int]$uac.EnableLUA -eq 1){'Good'}else{'High'}},
+        [PSCustomObject]@{Area='UAC';Setting='ConsentPromptBehaviorAdmin';Value=$uac.ConsentPromptBehaviorAdmin;Assessment=if([int]$uac.ConsentPromptBehaviorAdmin -eq 0){'Review'}else{'Info'}},
+        [PSCustomObject]@{Area='UAC';Setting='PromptOnSecureDesktop';Value=$uac.PromptOnSecureDesktop;Assessment=if([int]$uac.PromptOnSecureDesktop -eq 1){'Good'}else{'Review'}},
+        [PSCustomObject]@{Area='RDP';Setting='Remote Desktop Enabled';Value=$rdpEnabled;Assessment=if($rdpEnabled){'Review'}else{'Good'}},
+        [PSCustomObject]@{Area='RDP';Setting='Network Level Authentication';Value=$rdpTcp.UserAuthentication;Assessment=if($rdpEnabled -and [int]$rdpTcp.UserAuthentication -ne 1){'High'}elseif([int]$rdpTcp.UserAuthentication -eq 1){'Good'}else{'Info'}},
+        [PSCustomObject]@{Area='LSA';Setting='RunAsPPL';Value=$lsa.RunAsPPL;Assessment=if([int]$lsa.RunAsPPL -in @(1,2)){'Good'}else{'Review'}},
+        [PSCustomObject]@{Area='LSA';Setting='LmCompatibilityLevel';Value=$lsa.LmCompatibilityLevel;Assessment=if($lsa.LmCompatibilityLevel -ne $null -and [int]$lsa.LmCompatibilityLevel -lt 3){'Review'}else{'Info'}},
+        [PSCustomObject]@{Area='SMB';Setting='SMB1';Value=$smb.SMB1;Assessment=if([int]$smb.SMB1 -eq 1){'High'}elseif($smb.SMB1 -eq $null){'Info'}else{'Good'}},
+        [PSCustomObject]@{Area='Defender Policy';Setting='DisableAntiSpyware';Value=$defender.DisableAntiSpyware;Assessment=if([int]$defender.DisableAntiSpyware -eq 1){'High'}else{'Info'}},
+        [PSCustomObject]@{Area='Defender Policy';Setting='DisableRealtimeMonitoring';Value=$defenderRt.DisableRealtimeMonitoring;Assessment=if([int]$defenderRt.DisableRealtimeMonitoring -eq 1){'High'}else{'Info'}},
+        [PSCustomObject]@{Area='Windows Script Host';Setting='Enabled';Value=$wshMachine.Enabled;Assessment='Info'}
+    )
+    $html += Add-HtmlTable 'Selected Security Registry Settings' $rows ([ordered]@{Area='Area';Setting='Setting';Value='Value';Assessment='Assessment'})
+
+    $policyRoots=@('HKLM:\SOFTWARE\Policies\Microsoft\Windows Defender','HKLM:\SOFTWARE\Policies\Microsoft\Windows\System')
+    $policyRows=@(Get-RegistryValueRows -Paths $policyRoots -Recurse)
+    $html += Add-HtmlTable 'Additional Security Policy Values' $policyRows ([ordered]@{Key='Registry Key';Name='Value';Type='Type';Value='Data';Assessment='Assessment'}) 'No additional values were returned from the selected policy roots.'
+    $html += '<p class="note">A Review result is not automatically insecure. Managed endpoints can intentionally configure these values through Group Policy, Intune or another security baseline.</p>'
+    $html += Close-HtmlReport
+    Write-HtmlReport $html
+}
+
+'RegistrySearch' {
+    if ([string]::IsNullOrWhiteSpace($TargetPath)) { throw 'A registry search term was not supplied.' }
+    $term = $TargetPath.Trim()
+    $html = New-HtmlHeader 'Registry Search' ('Search results for: ' + (HtmlEncodeValue $term))
+    $roots = @('HKCU\Software','HKLM\SOFTWARE','HKLM\SYSTEM\CurrentControlSet\Services')
+    $rows=@()
+    foreach($root in $roots){
+        $output=@()
+        try { $output = @(& reg.exe query $root /f $term /s 2>&1) } catch { $output=@($_.Exception.Message) }
+        foreach($line in $output){
+            $value=[string]$line
+            if([string]::IsNullOrWhiteSpace($value)){continue}
+            if($value -match '^End of search'){continue}
+            $rows += [PSCustomObject]@{Root=$root;Result=$value.Trim();Assessment='Info'}
+            if($rows.Count -ge 1000){break}
+        }
+        if($rows.Count -ge 1000){break}
+    }
+    $html += Add-HtmlTable 'Matches' $rows ([ordered]@{Root='Search Root';Result='Result';Assessment='Assessment'}) 'No matches were returned from the selected registry roots.'
+    if($rows.Count -ge 1000){$html += '<p class="note">Result display was capped at 1,000 lines. Refine the search term for a narrower result set.</p>'}
+    $html += '<p class="note">Search scope: HKCU\\Software, HKLM\\SOFTWARE and HKLM\\SYSTEM\\CurrentControlSet\\Services. This is intentionally narrower than a full-hive forensic search to keep technician searches practical.</p>'
+    $html += Close-HtmlReport
+    Write-HtmlReport $html
+}
+
+'RegistrySnapshot' {
+    if ([string]::IsNullOrWhiteSpace($TargetPath)) { throw 'A snapshot output path was not supplied.' }
+    $snapshotRows = @(Get-ToolkitRegistrySnapshotRows)
+    $snapshot = [PSCustomObject]@{
+        FormatVersion = 1
+        Toolkit = "Raymond Endpoint Toolkit"
+        Computer = $env:COMPUTERNAME
+        User = $env:USERNAME
+        Created = (Get-Date).ToString('o')
+        EntryCount = $snapshotRows.Count
+        Entries = $snapshotRows
+    }
+    $parent = Split-Path -Parent $TargetPath
+    if($parent -and -not (Test-Path -LiteralPath $parent)){New-Item -ItemType Directory -Path $parent -Force | Out-Null}
+    $snapshot | ConvertTo-Json -Depth 6 | Out-File -LiteralPath $TargetPath -Encoding UTF8
+    Write-Host ('Snapshot entries: ' + $snapshotRows.Count) -ForegroundColor Green
+    Write-Host ('Snapshot file   : ' + $TargetPath) -ForegroundColor Green
+}
+
+'RegistryCompare' {
+    if ([string]::IsNullOrWhiteSpace($TargetPath)) { throw 'Snapshot paths were not supplied.' }
+    $parts = $TargetPath -split '\|',2
+    if($parts.Count -ne 2){throw 'Two snapshot paths are required.'}
+    $baselinePath=$parts[0]
+    $comparisonPath=$parts[1]
+    if(-not (Test-Path -LiteralPath $baselinePath)){throw 'Baseline snapshot not found.'}
+    if(-not (Test-Path -LiteralPath $comparisonPath)){throw 'Comparison snapshot not found.'}
+
+    $baseline = Get-Content -LiteralPath $baselinePath -Raw | ConvertFrom-Json
+    $comparison = Get-Content -LiteralPath $comparisonPath -Raw | ConvertFrom-Json
+    $before=@{};$after=@{}
+    foreach($row in @($baseline.Entries)){$before[([string]$row.Key+'|'+[string]$row.Name)]=$row}
+    foreach($row in @($comparison.Entries)){$after[([string]$row.Key+'|'+[string]$row.Name)]=$row}
+
+    $allKeys=@($before.Keys + $after.Keys | Sort-Object -Unique)
+    $changes=@()
+    foreach($id in $allKeys){
+        $b=$before[$id];$a=$after[$id]
+        if($null -eq $b){
+            $changes += [PSCustomObject]@{Change='Added';Key=$a.Key;Name=$a.Name;Before='';After=$a.Value;Assessment='Review'}
+        }
+        elseif($null -eq $a){
+            $changes += [PSCustomObject]@{Change='Removed';Key=$b.Key;Name=$b.Name;Before=$b.Value;After='';Assessment='Review'}
+        }
+        elseif(([string]$b.Type -ne [string]$a.Type) -or ([string]$b.Value -ne [string]$a.Value)){
+            $changes += [PSCustomObject]@{Change='Changed';Key=$a.Key;Name=$a.Name;Before=$b.Value;After=$a.Value;Assessment='Review'}
+        }
+    }
+
+    $html=New-HtmlHeader 'Registry Snapshot Comparison' 'Differences between two targeted Raymond Endpoint Toolkit registry troubleshooting snapshots.'
+    $summary=@(
+        [PSCustomObject]@{Item='Baseline Computer';Value=$baseline.Computer;Assessment='Info'},
+        [PSCustomObject]@{Item='Baseline Created';Value=$baseline.Created;Assessment='Info'},
+        [PSCustomObject]@{Item='Comparison Computer';Value=$comparison.Computer;Assessment=if([string]$baseline.Computer -ne [string]$comparison.Computer){'Review'}else{'Info'}},
+        [PSCustomObject]@{Item='Comparison Created';Value=$comparison.Created;Assessment='Info'},
+        [PSCustomObject]@{Item='Changes';Value=$changes.Count;Assessment=if($changes.Count -gt 0){'Review'}else{'Good'}}
+    )
+    $html += Add-HtmlTable 'Comparison Summary' $summary ([ordered]@{Item='Item';Value='Value';Assessment='Assessment'})
+    $html += Add-HtmlTable 'Registry Differences' $changes ([ordered]@{Change='Change';Key='Registry Key';Name='Value';Before='Before';After='After';Assessment='Assessment'}) 'No differences were detected in the targeted snapshot locations.'
+    $html += '<p class="note">Snapshots cover selected troubleshooting locations, not the complete Windows registry. Changes can be caused by Windows, applications, Group Policy, Intune or user actions.</p>'
+    $html += Close-HtmlReport
+    Write-HtmlReport $html
+}
+
 'TempCleanup' {
     $cutoff = (Get-Date).AddHours(-48)
     $targets = @($env:TEMP, (Join-Path $env:WINDIR 'Temp')) | Where-Object {$_} | Select-Object -Unique
@@ -6736,7 +7778,7 @@ switch ($Mode) {
 
 }
 
-if ($ReportPath -and $Mode -in @('Performance','DiskHealth','Startup','Power','Profile')) {
+if ($ReportPath -and $Mode -in @('Network','Performance','DiskHealth','Startup','Power','Profile','WinGetUpdates','RegistryHealth','RegistryExplorer','RegistryWindowsUpdate','RegistryNetwork','RegistryStartup','RegistrySecurity','RegistrySearch','RegistryCompare')) {
     if (-not (Test-Path -LiteralPath $ReportPath)) { throw 'Report file was not created.' }
 }
 exit 0
@@ -6780,49 +7822,21 @@ exit /b
 
 
 :: ============================================================
-:: EXIT AND DELETE TOOLKIT
+:: EXIT TOOLKIT
 :: ============================================================
 
 :EXITTOOLKIT
 cls
 echo ============================================================
-echo EXIT AND DELETE TOOLKIT
+echo EXIT RAYMOND ENDPOINT TOOLKIT
 echo ============================================================
 echo.
-echo WARNING:
-echo.
-echo This will permanently delete this toolkit BAT file:
-echo.
-echo %~f0
-echo.
-echo The logs folder and diagnostic reports will NOT be deleted.
+echo Closing toolkit...
 echo.
 
-choice /C YN /N /M "Delete the toolkit and exit? [Y/N]: "
+call :WriteLog "Toolkit exited by user"
 
-if errorlevel 2 goto MENU
-
-call :WriteLog "Toolkit self-delete requested"
-
-echo.
-echo Closing toolkit and deleting BAT file...
-echo.
-
-set "SELFFILE=%~f0"
-set "DELETER=%TEMP%\RaymondToolkit_Delete_%RANDOM%_%RANDOM%.cmd"
-
-:: Build a temporary helper script that deletes this BAT after it exits.
->"%DELETER%" echo @echo off
->>"%DELETER%" echo timeout /t 1 /nobreak ^>nul
->>"%DELETER%" echo :DELETELOOP
->>"%DELETER%" echo del /f /q "%SELFFILE%" ^>nul 2^>^&1
->>"%DELETER%" echo if exist "%SELFFILE%" ^(
->>"%DELETER%" echo     timeout /t 1 /nobreak ^>nul
->>"%DELETER%" echo     goto DELETELOOP
->>"%DELETER%" echo ^)
->>"%DELETER%" echo del /f /q "%%~f0" ^>nul 2^>^&1
-
-start "" /min "%ComSpec%" /d /c call "%DELETER%"
+timeout /t 1 /nobreak >nul
 
 endlocal
 exit /b
