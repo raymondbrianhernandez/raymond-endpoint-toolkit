@@ -1,0 +1,12 @@
+logs/
+DriverBackups/
+*.log
+*.tmp
+*.bak
+
+# Generated diagnostic reports
+*.html
+
+# Windows metadata
+Thumbs.db
+Desktop.ini
